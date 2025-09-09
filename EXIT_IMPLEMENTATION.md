@@ -38,6 +38,19 @@ The batch application has been successfully updated to exit after job completion
 
 - ✅ VAT Calculation Job: Completed successfully, exited with code 0
 - ✅ JSON Export Job: Completed successfully, exited with code 0
+
+### ✅ Exit Code Validation (Confirmed Working)
+
+**Success Scenarios (Exit Code 0):**
+- Job completes with status "COMPLETED"
+- All steps execute successfully
+- Application logs: `🔚 Job execution completed. Exiting application with code: 0`
+
+**Failure Scenarios (Exit Code 1):**
+- Invalid job name: `❌ Job 'invalid-job-name' not found`
+- Database connection failure: `Communications link failure`
+- Job execution exception: Any runtime exception during processing
+- Application logs: `🔚 Job execution completed. Exiting application with code: 1`
 - ✅ Both jobs process data correctly and shut down cleanly
 - ✅ Proper exit codes (0 for success, 1 for failure)
 - ✅ Clean resource shutdown (database connections, Tomcat, etc.)
@@ -70,12 +83,14 @@ batch-vat-calculation exited with code 0
 ### Command Line Execution
 
 **Recommended: Use Docker Compose Jobs**
+
 ```bash
 ./run-jobs.sh vat-calculation
 ./run-jobs.sh export-json
 ```
 
 **Alternative: Direct JAR execution (requires local MySQL on port 3306)**
+
 ```bash
 java -jar target/batch-processing-1.0.0.jar --job=vat-calculation
 java -jar target/batch-processing-1.0.0.jar --job=export-json
