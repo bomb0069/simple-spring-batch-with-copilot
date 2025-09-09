@@ -71,16 +71,14 @@ docker-compose down
 #### Command Line Usage:
 
 ```bash
-# ใช้ script helper
-./run-job.sh vat-calculation
-./run-job.sh export-json
+# ใช้ Docker Compose Jobs helper script
+./run-jobs.sh vat-calculation
+./run-jobs.sh export-json
+./run-jobs.sh all-jobs
 
-# หรือรันโดยตรงผ่าน Docker
-docker run --rm --network batch_batch-network batch-batch-app --job=vat-calculation
-docker run --rm --network batch_batch-network batch-batch-app --job=export-json
-
-# ตรวจสอบ available jobs (ไม่ระบุ --job)
-docker run --rm --network batch_batch-network batch-batch-app
+# หรือเรียกใช้โดยตรงผ่าน docker-compose
+docker-compose -f docker-compose.jobs.yml --profile vat-calculation up --abort-on-container-exit
+docker-compose -f docker-compose.jobs.yml --profile export-json up --abort-on-container-exit
 ```
 
 #### REST API Alternative:
@@ -124,6 +122,7 @@ curl http://localhost:8090/api/batch/jobs
 ```
 
 **ข้อดี:**
+
 - Jobs รันแล้วหยุดทันที (ไม่ค้าง web server)
 - แยก database port (3307) จาก main compose
 - สามารถรัน job หลายครั้งได้
@@ -131,6 +130,7 @@ curl http://localhost:8090/api/batch/jobs
 - ใช้ Docker profiles สำหรับ job selection
 
 **Access URLs:**
+
 - MySQL: `localhost:3307`
 - Adminer: `http://localhost:8081`
 

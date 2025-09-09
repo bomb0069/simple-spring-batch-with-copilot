@@ -8,6 +8,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.boot.SpringApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Arrays;
@@ -21,14 +23,20 @@ public class BatchJobRunner implements CommandLineRunner {
 
     private final JobLauncher jobLauncher;
     private final Map<String, Job> jobs;
+    private final ApplicationContext applicationContext;
 
     @Value("${batch.auto-run.enabled:false}")
     private boolean autoRunEnabled;
 
+    @Value("${batch.exit-on-completion:true}")
+    private boolean exitOnCompletion;
+
     public BatchJobRunner(JobLauncher jobLauncher,
             @Qualifier("vatCalculationJob") Job vatCalculationJob,
-            @Qualifier("exportVatCalculationsJob") Job exportVatCalculationsJob) {
+            @Qualifier("exportVatCalculationsJob") Job exportVatCalculationsJob,
+            ApplicationContext applicationContext) {
         this.jobLauncher = jobLauncher;
+        this.applicationContext = applicationContext;
         this.jobs = new HashMap<>();
         this.jobs.put("vat-calculation", vatCalculationJob);
         this.jobs.put("export-json", exportVatCalculationsJob);
@@ -45,7 +53,8 @@ public class BatchJobRunner implements CommandLineRunner {
 
         if (requestedJob != null) {
             logger.info("🎯 Running specific job from command line: {}", requestedJob);
-            executeJob(requestedJob);
+            boolean success = executeJob(requestedJob);
+            exitApplicationIfConfigured(success);
             return;
         }
 
@@ -67,7 +76,8 @@ public class BatchJobRunner implements CommandLineRunner {
 
         // Default behavior when auto-run is enabled (run VAT calculation job)
         logger.info("🚀 Auto-run enabled: Starting default VAT Calculation Batch Job...");
-        executeJob("vat-calculation");
+        boolean success = executeJob("vat-calculation");
+        exitApplicationIfConfigured(success);
     }
 
     private String findJobArgument(String... args) {
@@ -79,11 +89,11 @@ public class BatchJobRunner implements CommandLineRunner {
         return null;
     }
 
-    private void executeJob(String jobName) throws Exception {
+    private boolean executeJob(String jobName) throws Exception {
         Job job = jobs.get(jobName);
         if (job == null) {
             logger.error("❌ Job '{}' not found. Available jobs: {}", jobName, jobs.keySet());
-            return;
+            return false;
         }
 
         logger.info("🚀 Starting job: {} ({})", jobName, job.getName());
@@ -95,6 +105,8 @@ public class BatchJobRunner implements CommandLineRunner {
                     .toJobParameters();
 
             var jobExecution = jobLauncher.run(job, jobParameters);
+
+            boolean isSuccess = "COMPLETED".equals(jobExecution.getStatus().toString());
 
             logger.info("✅ Batch Job '{}' completed with status: {}", jobName, jobExecution.getStatus());
             logger.info("📊 Job Execution Summary:");
@@ -111,10 +123,20 @@ public class BatchJobRunner implements CommandLineRunner {
                             stepExecution.getWriteCount(),
                             stepExecution.getSkipCount()));
 
+            return isSuccess;
+
         } catch (Exception e) {
             logger.error("❌ Batch Job '{}' failed with error: {}", jobName, e.getMessage());
             logger.error("   Exception details: ", e);
-            throw e;
+            return false;
+        }
+    }
+
+    private void exitApplicationIfConfigured(boolean success) {
+        if (exitOnCompletion) {
+            int exitCode = success ? 0 : 1;
+            logger.info("🔚 Job execution completed. Exiting application with code: {}", exitCode);
+            SpringApplication.exit(applicationContext, () -> exitCode);
         }
     }
 }
