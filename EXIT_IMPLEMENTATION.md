@@ -19,11 +19,11 @@ The batch application has been successfully updated to exit after job completion
 - Added `batch.exit-on-completion=true` property
 - Controls whether application exits after job completion
 
-### 3. Command Line Profile
+### 3. Docker Compose Integration
 
-- Created `application-cmd.properties` for command line execution
-- Uses port 3307 to match jobs infrastructure
-- Server runs on port 8082 to avoid conflicts
+- Jobs run in containers with environment-based configuration
+- Database ports isolated between main app (3306) and jobs (3307)
+- Container orchestration handles infrastructure automatically
 
 ## 🧪 Testing Results
 
@@ -69,10 +69,16 @@ batch-vat-calculation exited with code 0
 
 ### Command Line Execution
 
+**Recommended: Use Docker Compose Jobs**
 ```bash
-# Using the cmd profile for proper database ports
-java -jar target/batch-processing-1.0.0.jar --spring.profiles.active=cmd --job=vat-calculation
-java -jar target/batch-processing-1.0.0.jar --spring.profiles.active=cmd --job=export-json
+./run-jobs.sh vat-calculation
+./run-jobs.sh export-json
+```
+
+**Alternative: Direct JAR execution (requires local MySQL on port 3306)**
+```bash
+java -jar target/batch-processing-1.0.0.jar --job=vat-calculation
+java -jar target/batch-processing-1.0.0.jar --job=export-json
 ```
 
 ### REST API (Service Mode)
