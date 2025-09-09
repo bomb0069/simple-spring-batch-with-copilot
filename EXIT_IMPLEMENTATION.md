@@ -42,11 +42,13 @@ The batch application has been successfully updated to exit after job completion
 ### ✅ Exit Code Validation (Confirmed Working)
 
 **Success Scenarios (Exit Code 0):**
+
 - Job completes with status "COMPLETED"
 - All steps execute successfully
 - Application logs: `🔚 Job execution completed. Exiting application with code: 0`
 
 **Failure Scenarios (Exit Code 1):**
+
 - Invalid job name: `❌ Job 'invalid-job-name' not found`
 - Database connection failure: `Communications link failure`
 - Job execution exception: Any runtime exception during processing
