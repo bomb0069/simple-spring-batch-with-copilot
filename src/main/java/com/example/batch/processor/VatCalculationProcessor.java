@@ -13,29 +13,31 @@ import java.math.RoundingMode;
 @Component
 public class VatCalculationProcessor implements ItemProcessor<PriceInput, PriceCalculation> {
 
-    private static final Logger logger = LoggerFactory.getLogger(VatCalculationProcessor.class);
+        private static final Logger logger = LoggerFactory.getLogger(VatCalculationProcessor.class);
 
-    @Override
-    public PriceCalculation process(PriceInput priceInput) throws Exception {
-        logger.info("Processing price: {} with VAT rate: {}", priceInput.getPrice(), priceInput.getVatRate());
+        @Override
+        public PriceCalculation process(PriceInput priceInput) throws Exception {
+                logger.info("Processing price: {} with VAT rate: {}", priceInput.getPrice(), priceInput.getVatRate());
 
-        // คำนวณ VAT Amount = Price * VAT Rate
-        BigDecimal vatAmount = priceInput.getPrice()
-                .multiply(priceInput.getVatRate())
-                .setScale(2, RoundingMode.HALF_UP);
+                Thread.sleep(3000);
 
-        // คำนวณ Total Price = Price + VAT Amount
-        BigDecimal totalPrice = priceInput.getPrice()
-                .add(vatAmount)
-                .setScale(2, RoundingMode.HALF_UP);
+                // คำนวณ VAT Amount = Price * VAT Rate
+                BigDecimal vatAmount = priceInput.getPrice()
+                                .multiply(priceInput.getVatRate())
+                                .setScale(2, RoundingMode.HALF_UP);
 
-        PriceCalculation calculation = new PriceCalculation(
-                priceInput.getPrice(),
-                priceInput.getVatRate(),
-                vatAmount,
-                totalPrice);
+                // คำนวณ Total Price = Price + VAT Amount
+                BigDecimal totalPrice = priceInput.getPrice()
+                                .add(vatAmount)
+                                .setScale(2, RoundingMode.HALF_UP);
 
-        logger.info("Calculated VAT: {} Total: {}", vatAmount, totalPrice);
-        return calculation;
-    }
+                PriceCalculation calculation = new PriceCalculation(
+                                priceInput.getPrice(),
+                                priceInput.getVatRate(),
+                                vatAmount,
+                                totalPrice);
+
+                logger.info("Calculated VAT: {} Total: {}", vatAmount, totalPrice);
+                return calculation;
+        }
 }
