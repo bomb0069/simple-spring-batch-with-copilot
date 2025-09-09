@@ -6,6 +6,7 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,9 @@ public class BatchJobRunner implements CommandLineRunner {
     private final JobLauncher jobLauncher;
     private final Job vatCalculationJob;
 
+    @Value("${batch.auto-run.enabled:false}")
+    private boolean autoRunEnabled;
+
     public BatchJobRunner(JobLauncher jobLauncher, Job vatCalculationJob) {
         this.jobLauncher = jobLauncher;
         this.vatCalculationJob = vatCalculationJob;
@@ -24,6 +28,14 @@ public class BatchJobRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (!autoRunEnabled) {
+            logger.info("🛑 Batch auto-run is disabled. Use REST API endpoints to trigger jobs manually.");
+            logger.info("   - POST /api/batch/run/vat-calculation");
+            logger.info("   - POST /api/batch/run/export-json");
+            logger.info("   - GET  /api/batch/jobs (monitoring)");
+            return;
+        }
+
         logger.info("🚀 Starting VAT Calculation Batch Job...");
 
         try {
