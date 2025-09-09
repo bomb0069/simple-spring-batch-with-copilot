@@ -1,0 +1,118 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: batch-mysql-jobs
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: batch_db
+      MYSQL_USER: batch_user
+      MYSQL_PASSWORD: batch_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_jobs_data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - batch-jobs-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  adminer:
+    image: adminer
+    container_name: batch-adminer-jobs
+    ports:
+      - "8081:8080"
+    networks:
+      - batch-jobs-network
+    depends_on:
+      - mysql
+
+  # Job Runner Services - these will exit after job completion
+  vat-calculation-job:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: batch-vat-calculation
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=batch_user
+      - SPRING_DATASOURCE_PASSWORD=batch_password
+      - BUSINESS_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - BUSINESS_DATASOURCE_USERNAME=batch_user
+      - BUSINESS_DATASOURCE_PASSWORD=batch_password
+    command: ["java", "-jar", "app.jar", "--job=vat-calculation"]
+    volumes:
+      - ./data:/app/data
+    networks:
+      - batch-jobs-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - vat-calculation
+
+  export-json-job:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: batch-export-json
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=batch_user
+      - SPRING_DATASOURCE_PASSWORD=batch_password
+      - BUSINESS_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - BUSINESS_DATASOURCE_USERNAME=batch_user
+      - BUSINESS_DATASOURCE_PASSWORD=batch_password
+    command: ["java", "-jar", "app.jar", "--job=export-json"]
+    volumes:
+      - ./data:/app/data
+    networks:
+      - batch-jobs-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - export-json
+
+  # Combined job runner - runs both jobs sequentially
+  all-jobs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: batch-all-jobs
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=batch_user
+      - SPRING_DATASOURCE_PASSWORD=batch_password
+      - BUSINESS_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - BUSINESS_DATASOURCE_USERNAME=batch_user
+      - BUSINESS_DATASOURCE_PASSWORD=batch_password
+    command: >
+      sh -c "
+        echo '🚀 Running VAT Calculation Job...' &&
+        java -jar app.jar --job=vat-calculation &&
+        echo '✅ VAT Calculation completed!' &&
+        echo '🚀 Running Export JSON Job...' &&
+        java -jar app.jar --job=export-json &&
+        echo '✅ All jobs completed!'
+      "
+    volumes:
+      - ./data:/app/data
+    networks:
+      - batch-jobs-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - all-jobs
+
+volumes:
+  mysql_jobs_data:
+
+networks:
+  batch-jobs-network:
+    driver: bridge
