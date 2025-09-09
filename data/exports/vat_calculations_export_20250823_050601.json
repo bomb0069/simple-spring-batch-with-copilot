@@ -1,0 +1,80 @@
+{
+  "exportInfo" : {
+    "recordCount" : 10,
+    "format" : "JSON",
+    "exportTimestamp" : "2025-08-23T05:06:01.000388376",
+    "source" : "batch-processing-system",
+    "version" : "1.0"
+  },
+  "vatCalculations" : [ {
+    "id" : 1,
+    "originalPrice" : 100.00,
+    "vatRate" : 0.0700,
+    "vatAmount" : 7.00,
+    "totalPrice" : 107.00,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 2,
+    "originalPrice" : 250.50,
+    "vatRate" : 0.0700,
+    "vatAmount" : 17.54,
+    "totalPrice" : 268.04,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 3,
+    "originalPrice" : 75.25,
+    "vatRate" : 0.1000,
+    "vatAmount" : 7.53,
+    "totalPrice" : 82.78,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 4,
+    "originalPrice" : 500.00,
+    "vatRate" : 0.0700,
+    "vatAmount" : 35.00,
+    "totalPrice" : 535.00,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 5,
+    "originalPrice" : 1000.00,
+    "vatRate" : 0.1000,
+    "vatAmount" : 100.00,
+    "totalPrice" : 1100.00,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 6,
+    "originalPrice" : 50.75,
+    "vatRate" : 0.0700,
+    "vatAmount" : 3.55,
+    "totalPrice" : 54.30,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 7,
+    "originalPrice" : 300.00,
+    "vatRate" : 0.1000,
+    "vatAmount" : 30.00,
+    "totalPrice" : 330.00,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 8,
+    "originalPrice" : 150.25,
+    "vatRate" : 0.0700,
+    "vatAmount" : 10.52,
+    "totalPrice" : 160.77,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 9,
+    "originalPrice" : 750.00,
+    "vatRate" : 0.0700,
+    "vatAmount" : 52.50,
+    "totalPrice" : 802.50,
+    "processedAt" : "2025-08-23 05:04:46"
+  }, {
+    "id" : 10,
+    "originalPrice" : 200.50,
+    "vatRate" : 0.1000,
+    "vatAmount" : 20.05,
+    "totalPrice" : 220.55,
+    "processedAt" : "2025-08-23 05:04:46"
+  } ]
+}

@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: batch-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      # Create single database for both metadata and business data
+      MYSQL_DATABASE: batch_db
+      MYSQL_USER: batch_user
+      MYSQL_PASSWORD: batch_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - batch-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  adminer:
+    image: adminer
+    container_name: batch-adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - batch-network
+
+  batch-app:
+    build: .
+    container_name: batch-processing-app
+    ports:
+      - "8090:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # Simple configuration - use single database
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: batch_user
+      SPRING_DATASOURCE_PASSWORD: batch_password
+      # Business data same database for now
+      BUSINESS_DATASOURCE_URL: jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      BUSINESS_DATASOURCE_USERNAME: batch_user
+      BUSINESS_DATASOURCE_PASSWORD: batch_password
+    networks:
+      - batch-network
+    volumes:
+      - ./data:/app/data
+    restart: on-failure
+
+volumes:
+  mysql_data:
+
+networks:
+  batch-network:
+    driver: bridge

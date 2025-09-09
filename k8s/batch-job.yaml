@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: batch-processing-job
+  namespace: batch-processing
+  labels:
+    app: batch-processing
+spec:
+  template:
+    metadata:
+      labels:
+        app: batch-processing
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      containers:
+        - name: batch-app
+          image: your-registry/batch-processing:latest
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+            - name: SPRING_BATCH_JOB_ENABLED
+              value: "true"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: input-data
+              mountPath: /app/data
+      volumes:
+        - name: input-data
+          configMap:
+            name: csv-input-data
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.35
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;",
+            ]
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

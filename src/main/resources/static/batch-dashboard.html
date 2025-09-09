@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spring Batch Monitoring Dashboard</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .status-completed {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .status-failed {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .status-running {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      .status-no-executions {
+        background-color: #e2e3e5;
+        color: #383d41;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .metric:last-child {
+        border-bottom: none;
+      }
+      .metric-label {
+        font-weight: 500;
+        color: #666;
+      }
+      .metric-value {
+        font-weight: bold;
+        color: #333;
+      }
+      .refresh-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+      .refresh-btn:hover {
+        background: #0056b3;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🚀 Spring Batch Monitoring Dashboard</h1>
+        <p>Real-time monitoring for VAT Calculation Batch Jobs</p>
+      </div>
+
+      <button class="refresh-btn" onclick="loadDashboard()">
+        🔄 Refresh Data
+      </button>
+
+      <div id="dashboard-content">
+        <div class="loading">Loading batch job data...</div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "/api/batch";
+
+      async function loadDashboard() {
+        const content = document.getElementById("dashboard-content");
+        content.innerHTML =
+          '<div class="loading">Loading batch job data...</div>';
+
+        try {
+          const response = await fetch(`${API_BASE}/jobs`);
+          if (!response.ok) throw new Error("Failed to fetch data");
+
+          const data = await response.json();
+          renderDashboard(data);
+        } catch (error) {
+          content.innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+        }
+      }
+
+      function renderDashboard(data) {
+        const content = document.getElementById("dashboard-content");
+
+        let html = `
+                <div class="card">
+                    <h2>📊 Overview</h2>
+                    <div class="metric">
+                        <span class="metric-label">Total Jobs</span>
+                        <span class="metric-value">${data.totalJobs}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Last Updated</span>
+                        <span class="metric-value">${new Date().toLocaleString()}</span>
+                    </div>
+                </div>
+
+                <div class="grid">
+            `;
+
+        for (const [jobName, status] of Object.entries(data.jobStatuses)) {
+          html += renderJobCard(jobName, status);
+        }
+
+        html += "</div>";
+        content.innerHTML = html;
+      }
+
+      function renderJobCard(jobName, status) {
+        const statusClass = getStatusClass(status.status);
+        const duration =
+          status.endTime && status.startTime
+            ? new Date(status.endTime) - new Date(status.startTime)
+            : null;
+
+        return `
+                <div class="card">
+                    <h3>⚙️ ${jobName}</h3>
+                    <div class="metric">
+                        <span class="metric-label">Status</span>
+                        <span class="status-badge ${statusClass}">${
+          status.status
+        }</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Exit Code</span>
+                        <span class="metric-value">${
+                          status.exitCode || "N/A"
+                        }</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Last Run</span>
+                        <span class="metric-value">${
+                          status.startTime
+                            ? new Date(status.startTime).toLocaleString()
+                            : "Never"
+                        }</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Duration</span>
+                        <span class="metric-value">${
+                          duration ? `${duration}ms` : "N/A"
+                        }</span>
+                    </div>
+                    ${renderStepSummary(status.stepSummary || [])}
+                    <button class="refresh-btn" onclick="showJobDetails('${jobName}')" style="margin-top: 10px; font-size: 12px; padding: 5px 10px;">
+                        View Details
+                    </button>
+                </div>
+            `;
+      }
+
+      function renderStepSummary(steps) {
+        if (!steps || steps.length === 0) return "";
+
+        let html =
+          '<div style="margin-top: 15px;"><strong>📋 Steps:</strong><br>';
+        steps.forEach((step) => {
+          const statusClass = getStatusClass(step.status);
+          html += `
+                    <div style="margin: 5px 0; font-size: 12px;">
+                        <span class="status-badge ${statusClass}" style="margin-right: 10px;">${step.stepName}</span>
+                        Read: ${step.readCount} | Write: ${step.writeCount} | Skip: ${step.skipCount}
+                    </div>
+                `;
+        });
+        html += "</div>";
+        return html;
+      }
+
+      function getStatusClass(status) {
+        switch (status) {
+          case "COMPLETED":
+            return "status-completed";
+          case "FAILED":
+            return "status-failed";
+          case "STARTED":
+          case "STARTING":
+            return "status-running";
+          default:
+            return "status-no-executions";
+        }
+      }
+
+      async function showJobDetails(jobName) {
+        try {
+          const response = await fetch(`${API_BASE}/jobs/${jobName}`);
+          const data = await response.json();
+
+          const newWindow = window.open("", "_blank", "width=800,height=600");
+          newWindow.document.write(`
+                    <html>
+                        <head><title>Job Details: ${jobName}</title></head>
+                        <body style="font-family: Arial, sans-serif; padding: 20px;">
+                            <h1>Job Details: ${jobName}</h1>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </body>
+                    </html>
+                `);
+        } catch (error) {
+          alert("Error loading job details: " + error.message);
+        }
+      }
+
+      // Load dashboard on page load
+      document.addEventListener("DOMContentLoaded", loadDashboard);
+
+      // Auto-refresh every 30 seconds
+      setInterval(loadDashboard, 30000);
+    </script>
+  </body>
+</html>
