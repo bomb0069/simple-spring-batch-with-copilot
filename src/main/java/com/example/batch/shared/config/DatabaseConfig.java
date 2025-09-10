@@ -1,4 +1,4 @@
-package com.example.batch.config;
+package com.example.batch.shared.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

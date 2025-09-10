@@ -1,36 +1,42 @@
-package com.example.batch.model;
+package com.example.batch.vatcalculation.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * DTO สำหรับ export ข้อมูล VAT calculation เป็น JSON
- * เพื่อส่งให้ระบบรอบข้าง
- */
-public class VatCalculationExport {
+@Entity
+@Table(name = "price_calculations")
+public class PriceCalculation {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "original_price", precision = 10, scale = 2, nullable = false)
     private BigDecimal originalPrice;
+
+    @Column(name = "vat_rate", precision = 5, scale = 4, nullable = false)
     private BigDecimal vatRate;
+
+    @Column(name = "vat_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal vatAmount;
+
+    @Column(name = "total_price", precision = 10, scale = 2, nullable = false)
     private BigDecimal totalPrice;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime processedAt;
+    @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime createdAt;
 
-    // Default constructor
-    public VatCalculationExport() {
+    public PriceCalculation() {
+        this.createdAt = LocalDateTime.now();
     }
 
-    // Constructor for conversion from PriceCalculation
-    public VatCalculationExport(PriceCalculation priceCalculation) {
-        this.id = priceCalculation.getId();
-        this.originalPrice = priceCalculation.getOriginalPrice();
-        this.vatRate = priceCalculation.getVatRate();
-        this.vatAmount = priceCalculation.getVatAmount();
-        this.totalPrice = priceCalculation.getTotalPrice();
-        this.processedAt = priceCalculation.getCreatedAt();
+    public PriceCalculation(BigDecimal originalPrice, BigDecimal vatRate, BigDecimal vatAmount, BigDecimal totalPrice) {
+        this();
+        this.originalPrice = originalPrice;
+        this.vatRate = vatRate;
+        this.vatAmount = vatAmount;
+        this.totalPrice = totalPrice;
     }
 
     // Getters and Setters
@@ -74,23 +80,23 @@ public class VatCalculationExport {
         this.totalPrice = totalPrice;
     }
 
-    public LocalDateTime getProcessedAt() {
-        return processedAt;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setProcessedAt(LocalDateTime processedAt) {
-        this.processedAt = processedAt;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     @Override
     public String toString() {
-        return "VatCalculationExport{" +
+        return "PriceCalculation{" +
                 "id=" + id +
                 ", originalPrice=" + originalPrice +
                 ", vatRate=" + vatRate +
                 ", vatAmount=" + vatAmount +
                 ", totalPrice=" + totalPrice +
-                ", processedAt=" + processedAt +
+                ", createdAt=" + createdAt +
                 '}';
     }
 }

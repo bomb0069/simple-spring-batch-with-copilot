@@ -1,4 +1,4 @@
-package com.example.batch.model;
+package com.example.batch.vatcalculation.model;
 
 import java.math.BigDecimal;
 

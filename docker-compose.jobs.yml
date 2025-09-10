@@ -82,7 +82,7 @@ services:
   all-jobs:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.all-jobs
     container_name: batch-all-jobs
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -93,11 +93,14 @@ services:
       - BUSINESS_DATASOURCE_PASSWORD=batch_password
     command: >
       sh -c "
+        echo '⏳ Waiting for MySQL to be ready...' &&
+        sleep 15 &&
+        echo '✅ MySQL should be ready!' &&
         echo '🚀 Running VAT Calculation Job...' &&
-        java -jar app.jar --job=vat-calculation &&
+        java -Dspring.main.web-application-type=none -jar app.jar --job=vat-calculation &&
         echo '✅ VAT Calculation completed!' &&
         echo '🚀 Running Export JSON Job...' &&
-        java -jar app.jar --job=export-json &&
+        java -Dspring.main.web-application-type=none -jar app.jar --job=export-json &&
         echo '✅ All jobs completed!'
       "
     volumes:

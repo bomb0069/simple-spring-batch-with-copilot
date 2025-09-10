@@ -1,0 +1,27 @@
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy Maven wrapper and pom.xml for dependency caching
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+
+# Download dependencies (this layer will be cached)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY src ./src
+
+# Build the application and copy jar
+RUN ./mvnw clean package -DskipTests && \
+    cp target/*.jar app.jar
+
+# Copy the unified job runner script
+COPY run-jobs.sh ./run-jobs.sh
+RUN chmod +x ./run-jobs.sh
+
+# Copy data directory
+COPY data ./data
+
+# Default command - run all jobs directly in container
+CMD ["./run-jobs.sh", "all-jobs", "--direct"]

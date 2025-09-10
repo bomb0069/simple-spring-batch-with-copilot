@@ -1,8 +1,7 @@
-package com.example.batch.processor;
+package com.example.batch.vatcalculation.processor;
 
 import com.example.batch.vatcalculation.model.PriceInput;
 import com.example.batch.vatcalculation.model.PriceCalculation;
-import com.example.batch.vatcalculation.processor.VatCalculationProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

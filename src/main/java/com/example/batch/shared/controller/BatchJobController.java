@@ -1,4 +1,4 @@
-package com.example.batch.controller;
+package com.example.batch.shared.controller;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;

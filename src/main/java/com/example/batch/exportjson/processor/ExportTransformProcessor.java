@@ -1,7 +1,7 @@
-package com.example.batch.processor;
+package com.example.batch.exportjson.processor;
 
-import com.example.batch.model.PriceCalculation;
-import com.example.batch.model.VatCalculationExport;
+import com.example.batch.vatcalculation.model.PriceCalculation;
+import com.example.batch.exportjson.model.VatCalculationExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;

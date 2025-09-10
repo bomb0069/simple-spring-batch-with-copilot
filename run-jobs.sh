@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Batch Jobs Runner using docker-compose.jobs.yml
-# Usage: ./run-jobs.sh [job-profile]
+# Batch Jobs Runner - Supports Docker Compose and direct execution
+# Usage: ./run-jobs.sh [job-profile] [--direct]
 
 set -e
 
-echo "🚀 Spring Batch Jobs Runner (Docker Compose)"
-echo "=============================================="
+echo "🚀 Spring Batch Jobs Runner"
+echo "============================"
 
 # Function to show usage
 show_usage() {
@@ -15,10 +15,15 @@ show_usage() {
     echo "   • export-json         - Run JSON export job only"
     echo "   • all-jobs           - Run both jobs sequentially"
     echo ""
-    echo "💡 Usage Examples:"
+    echo "💡 Docker Compose Usage (default):"
     echo "   ./run-jobs.sh vat-calculation"
     echo "   ./run-jobs.sh export-json"
     echo "   ./run-jobs.sh all-jobs"
+    echo ""
+    echo "🎯 Direct Execution Usage:"
+    echo "   ./run-jobs.sh vat-calculation --direct"
+    echo "   ./run-jobs.sh export-json --direct"
+    echo "   ./run-jobs.sh all-jobs --direct"
     echo ""
     echo "🔧 Infrastructure Commands:"
     echo "   ./run-jobs.sh start      - Start MySQL and Adminer only"
@@ -31,14 +36,109 @@ show_usage() {
     echo "   • Adminer: http://localhost:8081"
 }
 
-# Check if docker-compose is available
+# Function to run jobs directly (without Docker)
+run_direct_jobs() {
+    local job_type=$1
+    
+    echo "🎯 Direct Execution Mode"
+    
+    # Check if JAR file exists
+    if [ ! -f "target/batch-processing-1.0.0.jar" ]; then
+        echo "📦 Building JAR file..."
+        ./mvnw clean package -DskipTests
+    fi
+    
+    # Wait for MySQL to be ready if running
+    if docker ps | grep -q batch-mysql-jobs; then
+        echo "⏳ MySQL detected, waiting for it to be ready..."
+        sleep 5
+    fi
+    
+    case "$job_type" in
+        "vat-calculation")
+            echo "🚀 Running VAT Calculation Job..."
+            java -Dspring.main.web-application-type=none \
+                 -Dspring.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                 -Dbusiness.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                 -jar target/batch-processing-1.0.0.jar --job=vat-calculation
+            if [ $? -eq 0 ]; then
+                echo "✅ VAT Calculation completed!"
+            else
+                echo "❌ VAT Calculation job failed!"
+                exit 1
+            fi
+            ;;
+            
+        "export-json")
+            echo "🚀 Running Export JSON Job..."
+            java -Dspring.main.web-application-type=none \
+                 -Dspring.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                 -Dbusiness.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                 -jar target/batch-processing-1.0.0.jar --job=export-json
+            if [ $? -eq 0 ]; then
+                echo "✅ Export JSON completed!"
+            else
+                echo "❌ Export JSON job failed!"
+                exit 1
+            fi
+            ;;
+            
+        "all-jobs")
+            echo "🚀 Running VAT Calculation Job..."
+            java -Dspring.main.web-application-type=none \
+                 -Dspring.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                 -Dbusiness.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                 -jar target/batch-processing-1.0.0.jar --job=vat-calculation
+            VAT_EXIT_CODE=$?
+            
+            if [ $VAT_EXIT_CODE -eq 0 ]; then
+                echo "✅ VAT Calculation completed!"
+                echo "🚀 Running Export JSON Job..."
+                java -Dspring.main.web-application-type=none \
+                     -Dspring.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                     -Dbusiness.datasource.url="jdbc:mysql://localhost:3307/batch_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+                     -jar target/batch-processing-1.0.0.jar --job=export-json
+                EXPORT_EXIT_CODE=$?
+                
+                if [ $EXPORT_EXIT_CODE -eq 0 ]; then
+                    echo "✅ All jobs completed successfully!"
+                    exit 0
+                else
+                    echo "❌ Export JSON job failed with exit code: $EXPORT_EXIT_CODE"
+                    exit $EXPORT_EXIT_CODE
+                fi
+            else
+                echo "❌ VAT Calculation job failed with exit code: $VAT_EXIT_CODE"
+                exit $VAT_EXIT_CODE
+            fi
+            ;;
+    esac
+}
+
+# Get the job profile and execution mode
+JOB_PROFILE=${1:-""}
+EXECUTION_MODE=${2:-""}
+
+# Check for direct execution mode
+if [ "$EXECUTION_MODE" = "--direct" ] || [ "$JOB_PROFILE" = "--direct" ]; then
+    if [ "$JOB_PROFILE" = "--direct" ]; then
+        echo "❌ Job profile required when using --direct mode"
+        show_usage
+        exit 1
+    fi
+    run_direct_jobs "$JOB_PROFILE"
+    exit 0
+fi
+
+# Check if docker-compose is available (only for Docker mode)
 if ! command -v docker-compose &> /dev/null; then
     echo "❌ docker-compose not found. Please install Docker Compose."
+    echo "💡 Alternatively, use --direct mode for local execution"
     exit 1
 fi
 
-# Get the job profile
-JOB_PROFILE=${1:-""}
+echo "(Docker Compose Mode)"
+echo ""
 
 case "$JOB_PROFILE" in
     "vat-calculation")

@@ -1,4 +1,4 @@
-package com.example.batch.config;
+package com.example.batch.shared.config;
 
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.explore.JobExplorer;

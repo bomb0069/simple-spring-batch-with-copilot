@@ -1,7 +1,7 @@
-package com.example.batch.processor;
+package com.example.batch.vatcalculation.processor;
 
-import com.example.batch.model.PriceInput;
-import com.example.batch.model.PriceCalculation;
+import com.example.batch.vatcalculation.model.PriceInput;
+import com.example.batch.vatcalculation.model.PriceCalculation;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;

@@ -1,6 +1,6 @@
-package com.example.batch.writer;
+package com.example.batch.exportjson.writer;
 
-import com.example.batch.model.VatCalculationExport;
+import com.example.batch.exportjson.model.VatCalculationExport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -28,7 +29,9 @@ public class JsonFileWriter implements ItemWriter<VatCalculationExport> {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonFileWriter.class);
     private final ObjectMapper objectMapper;
-    private final String outputDirectory = "/app/data/exports";
+
+    @Value("${batch.export.output-directory:/app/data/exports}")
+    private String outputDirectory;
 
     public JsonFileWriter() {
         this.objectMapper = new ObjectMapper();

@@ -1,4 +1,4 @@
-package com.example.batch.config;
+package com.example.batch.shared.config;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;

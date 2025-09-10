@@ -1,4 +1,4 @@
-package com.example.batch.config;
+package com.example.batch.shared.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -15,7 +15,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackages = "com.example.batch.repository", entityManagerFactoryRef = "businessEntityManagerFactory", transactionManagerRef = "businessTransactionManager")
+@EnableJpaRepositories(basePackages = "com.example.batch.shared.repository", entityManagerFactoryRef = "businessEntityManagerFactory", transactionManagerRef = "businessTransactionManager")
 public class BusinessJpaConfig {
 
     @Bean(name = "businessEntityManagerFactory")
@@ -25,7 +25,7 @@ public class BusinessJpaConfig {
 
         return builder
                 .dataSource(businessDataSource)
-                .packages("com.example.batch.model")
+                .packages("com.example.batch.vatcalculation.model", "com.example.batch.exportjson.model")
                 .persistenceUnit("business")
                 .build();
     }
