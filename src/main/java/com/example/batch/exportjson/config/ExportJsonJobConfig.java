@@ -5,6 +5,8 @@ import com.example.batch.exportjson.model.VatCalculationExport;
 import com.example.batch.exportjson.processor.ExportTransformProcessor;
 import com.example.batch.exportjson.writer.JsonFileWriter;
 import com.example.batch.shared.repository.PriceCalculationRepository;
+import com.example.batch.shared.config.BatchJobMetricsListener;
+import com.example.batch.shared.config.BatchStepMetricsListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -47,20 +49,24 @@ public class ExportJsonJobConfig {
             @Qualifier("businessTransactionManager") PlatformTransactionManager transactionManager,
             RepositoryItemReader<PriceCalculation> exportReader,
             ExportTransformProcessor exportTransformProcessor,
-            JsonFileWriter jsonFileWriter) {
+            JsonFileWriter jsonFileWriter,
+            @Qualifier("batchStepMetricsListener") BatchStepMetricsListener stepMetricsListener) {
         return new StepBuilder("exportToJsonStep", jobRepository)
                 .<PriceCalculation, VatCalculationExport>chunk(10, transactionManager)
                 .reader(exportReader)
                 .processor(exportTransformProcessor)
                 .writer(jsonFileWriter)
+                .listener(stepMetricsListener)
                 .build();
     }
 
     // Job สำหรับ Export JSON
     @Bean
-    public Job exportVatCalculationsJob(Step exportToJsonStep) {
+    public Job exportVatCalculationsJob(Step exportToJsonStep,
+            @Qualifier("batchJobMetricsListener") BatchJobMetricsListener jobMetricsListener) {
         return new JobBuilder("exportVatCalculationsJob", jobRepository)
                 .start(exportToJsonStep)
+                .listener(jobMetricsListener)
                 .build();
     }
 }

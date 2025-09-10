@@ -4,6 +4,8 @@ import com.example.batch.vatcalculation.model.PriceInput;
 import com.example.batch.vatcalculation.model.PriceCalculation;
 import com.example.batch.vatcalculation.processor.VatCalculationProcessor;
 import com.example.batch.shared.repository.PriceCalculationRepository;
+import com.example.batch.shared.config.BatchJobMetricsListener;
+import com.example.batch.shared.config.BatchStepMetricsListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -59,20 +61,24 @@ public class VatCalculationJobConfig {
     public Step processVatCalculationStep(
             @Qualifier("businessTransactionManager") PlatformTransactionManager transactionManager,
             VatCalculationProcessor vatCalculationProcessor,
-            RepositoryItemWriter<PriceCalculation> vatCalculationWriter) {
+            RepositoryItemWriter<PriceCalculation> vatCalculationWriter,
+            @Qualifier("batchStepMetricsListener") BatchStepMetricsListener stepMetricsListener) {
         return new StepBuilder("processVatCalculationStep", jobRepository)
                 .<PriceInput, PriceCalculation>chunk(10, transactionManager)
                 .reader(vatCalculationReader())
                 .processor(vatCalculationProcessor) // Step 2: Processor - คำนวณ VAT
                 .writer(vatCalculationWriter)
+                .listener(stepMetricsListener)
                 .build();
     }
 
     // สร้าง Job ที่ประกอบด้วย Step
     @Bean
-    public Job vatCalculationJob(Step processVatCalculationStep) {
+    public Job vatCalculationJob(Step processVatCalculationStep,
+            @Qualifier("batchJobMetricsListener") BatchJobMetricsListener jobMetricsListener) {
         return new JobBuilder("vatCalculationJob", jobRepository)
                 .start(processVatCalculationStep)
+                .listener(jobMetricsListener)
                 .build();
     }
 }
