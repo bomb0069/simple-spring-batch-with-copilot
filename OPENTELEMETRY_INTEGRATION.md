@@ -31,6 +31,7 @@ This document describes the **OpenTelemetry integration** with the **LGTM observ
 ## 📦 Components
 
 ### 1. OpenTelemetry Java Agent
+
 - **Location**: Downloaded in Dockerfile (`/app/opentelemetry-javaagent.jar`)
 - **Version**: Latest from GitHub releases
 - **Purpose**: Auto-instrumentation of Java applications
@@ -39,31 +40,37 @@ This document describes the **OpenTelemetry integration** with the **LGTM observ
 ### 2. LGTM Stack Components
 
 #### Grafana (Port 3000)
+
 - **Purpose**: Visualization and dashboards
 - **Login**: admin/admin
 - **Features**: Pre-configured datasources for all telemetry data
 
 #### Loki (Port 3100)
+
 - **Purpose**: Log aggregation and storage
 - **Protocol**: HTTP API
 - **Integration**: Receives logs from OTel Collector
 
 #### Tempo (Port 3200)
+
 - **Purpose**: Distributed tracing
 - **Protocols**: OTLP gRPC (4317), OTLP HTTP (4318)
 - **Features**: Trace correlation with logs and metrics
 
 #### Mimir (Port 9009)
+
 - **Purpose**: Long-term metrics storage
 - **Protocol**: Prometheus remote write
 - **Features**: High-availability metrics storage
 
 #### Prometheus (Port 9090)
+
 - **Purpose**: Metrics collection and querying
 - **Targets**: Batch app, OTel Collector, other services
 - **Integration**: Scrapes /actuator/prometheus endpoint
 
 ### 3. OpenTelemetry Collector
+
 - **Purpose**: Telemetry data pipeline
 - **Protocols**: OTLP gRPC/HTTP, Prometheus scraping
 - **Processing**: Batching, resource attribution, routing
@@ -71,6 +78,7 @@ This document describes the **OpenTelemetry integration** with the **LGTM observ
 ## 🔧 Configuration
 
 ### Environment Variables (Docker)
+
 ```bash
 # Service identification
 OTEL_SERVICE_NAME=batch-processing
@@ -94,6 +102,7 @@ OTEL_INSTRUMENTATION_HIKARICP_ENABLED=true
 ```
 
 ### OTel Collector Configuration
+
 - **File**: `docker/otel/otel-collector-config.yaml`
 - **Receivers**: OTLP, Prometheus scraping
 - **Processors**: Batch processing, resource attribution
@@ -102,6 +111,7 @@ OTEL_INSTRUMENTATION_HIKARICP_ENABLED=true
 ## 🚀 Usage
 
 ### Quick Start
+
 ```bash
 # Start the full observability stack
 ./observability.sh start
@@ -120,6 +130,7 @@ OTEL_INSTRUMENTATION_HIKARICP_ENABLED=true
 ```
 
 ### Manual Start
+
 ```bash
 # Start observability stack first
 docker-compose -f observation-compose.yaml up -d
@@ -129,6 +140,7 @@ docker-compose up -d
 ```
 
 ### Alternative: Docker Compose Override
+
 ```bash
 # Using override file (experimental)
 docker-compose -f docker-compose.yml -f docker-compose.observability.yml up -d
@@ -137,18 +149,21 @@ docker-compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 ## 📊 Available Telemetry Data
 
 ### 🔍 Traces (Tempo)
+
 - **Spring Batch job execution traces**
 - **Database query traces** (JDBC/JPA)
 - **HTTP request traces** (REST API calls)
 - **Custom business logic spans**
 
 **Example trace data:**
+
 - Job execution: `batch.job.execution`
 - Step execution: `batch.step.execution`
 - Database operations: `jdbc.query`, `hibernate.session`
 - HTTP requests: `http.server.request`
 
 ### 📈 Metrics (Prometheus/Mimir)
+
 - **Custom batch metrics** (from Prometheus integration)
 - **JVM metrics** (memory, GC, threads)
 - **Database connection pool metrics** (HikariCP)
@@ -156,6 +171,7 @@ docker-compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 - **OpenTelemetry instrumentation metrics**
 
 **Example metrics:**
+
 ```promql
 # Custom batch metrics (from previous Prometheus integration)
 batch_job_duration_seconds
@@ -168,6 +184,7 @@ jvm_memory_used_bytes
 ```
 
 ### 📋 Logs (Loki)
+
 - **Application logs** (Spring Boot logging)
 - **Batch job execution logs**
 - **Database query logs** (if enabled)
@@ -175,6 +192,7 @@ jvm_memory_used_bytes
 - **Trace correlation** (logs linked to traces)
 
 **Log labels:**
+
 - `service_name="batch-processing"`
 - `level="INFO|WARN|ERROR"`
 - `job_name="vatCalculationJob"`
@@ -183,17 +201,20 @@ jvm_memory_used_bytes
 ## 🎛️ Dashboards and Visualization
 
 ### Grafana Dashboards
+
 Access at: **http://localhost:3000** (admin/admin)
 
 **Pre-configured data sources:**
+
 - **Prometheus**: Default metrics source
 - **Tempo**: Distributed tracing
-- **Loki**: Log aggregation  
+- **Loki**: Log aggregation
 - **Mimir**: Long-term metrics storage
 
 **Recommended dashboard queries:**
 
 #### Batch Job Monitoring
+
 ```promql
 # Job execution rate
 rate(batch_job_completed_total[5m])
@@ -206,6 +227,7 @@ increase(batch_job_completed_total{status!="COMPLETED"}[1h])
 ```
 
 #### System Monitoring
+
 ```promql
 # JVM memory usage
 jvm_memory_used_bytes{area="heap"}
@@ -218,12 +240,14 @@ rate(http_server_requests_seconds_count[5m])
 ```
 
 ### Trace Analysis (Tempo)
+
 - **End-to-end job execution traces**
 - **Database performance analysis**
 - **Error correlation across services**
 - **Performance bottleneck identification**
 
 ### Log Analysis (Loki)
+
 ```logql
 # Application logs for specific job
 {service_name="batch-processing"} |= "vatCalculationJob"
@@ -240,6 +264,7 @@ rate(http_server_requests_seconds_count[5m])
 ### Common Issues
 
 #### 1. OTel Agent Not Working
+
 ```bash
 # Check if agent is loaded
 docker logs batch-processing-app | grep -i "opentelemetry"
@@ -249,6 +274,7 @@ docker exec batch-processing-app ls -la /app/opentelemetry-javaagent.jar
 ```
 
 #### 2. No Traces in Tempo
+
 ```bash
 # Check OTel Collector logs
 docker logs batch-otel-collector
@@ -258,6 +284,7 @@ curl http://localhost:4318/v1/traces -X POST -H "Content-Type: application/json"
 ```
 
 #### 3. Missing Metrics
+
 ```bash
 # Check Prometheus targets
 curl http://localhost:9090/api/v1/targets
@@ -267,12 +294,14 @@ curl http://localhost:8889/metrics
 ```
 
 #### 4. Grafana Data Source Issues
+
 ```bash
 # Check data source connectivity in Grafana
 # Go to Configuration > Data Sources > Test
 ```
 
 ### Debug Commands
+
 ```bash
 # Check all container logs
 ./observability.sh logs
@@ -288,10 +317,11 @@ docker exec batch-otel-collector cat /etc/otelcol-contrib/otel-collector-config.
 ```
 
 ## 📁 File Structure
+
 ```
 .
 ├── docker-compose.yml                    # Main application compose
-├── observation-compose.yaml              # LGTM stack compose  
+├── observation-compose.yaml              # LGTM stack compose
 ├── docker-compose.observability.yml      # Combined override (experimental)
 ├── observability.sh                      # Management script
 ├── Dockerfile                           # Updated with OTel agent
@@ -312,12 +342,14 @@ docker exec batch-otel-collector cat /etc/otelcol-contrib/otel-collector-config.
 ## 🎯 Benefits
 
 ### Development
+
 - **Real-time debugging** with trace correlation
 - **Performance analysis** across all components
 - **Error tracking** with full context
 - **Local development observability** matching production
 
 ### Production
+
 - **Comprehensive monitoring** of batch operations
 - **Long-term metrics storage** with Mimir
 - **Centralized logging** with structured search

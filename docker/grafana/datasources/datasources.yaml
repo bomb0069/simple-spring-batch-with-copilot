@@ -15,22 +15,22 @@ datasources:
     editable: true
     jsonData:
       tracesToLogsV2:
-        datasourceUid: 'loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        datasourceUid: "loki"
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "-1h"
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
         query: '{service_name="batch-processing"} |= `$${__span.traceId}`'
       tracesToMetrics:
-        datasourceUid: 'prometheus'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        datasourceUid: "prometheus"
+        spanStartTimeShift: "1h"
+        spanEndTimeShift: "-1h"
         queries:
-          - name: 'Sample query'
-            query: 'sum(rate(batch_job_duration_seconds_count{$$__tags}[5m]))'
+          - name: "Sample query"
+            query: "sum(rate(batch_job_duration_seconds_count{$$__tags}[5m]))"
       serviceMap:
-        datasourceUid: 'prometheus'
+        datasourceUid: "prometheus"
       nodeGraph:
         enabled: true
 
