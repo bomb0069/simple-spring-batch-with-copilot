@@ -1,0 +1,54 @@
+version: "3.8"
+
+# This file extends the main docker-compose.yml to include observability stack
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+
+services:
+  # Extend batch-app to connect properly to observability
+  batch-app:
+    networks:
+      - batch-network
+      - observability
+    depends_on:
+      - mysql
+      - otel-collector
+    environment:
+      # OpenTelemetry configuration (extends base config)
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+  # Import all observability services from observation-compose.yaml
+  grafana:
+    extends:
+      file: observation-compose.yaml
+      service: grafana
+
+  loki:
+    extends:
+      file: observation-compose.yaml
+      service: loki
+
+  tempo:
+    extends:
+      file: observation-compose.yaml
+      service: tempo
+
+  mimir:
+    extends:
+      file: observation-compose.yaml
+      service: mimir
+
+  prometheus:
+    extends:
+      file: observation-compose.yaml
+      service: prometheus
+
+  otel-collector:
+    extends:
+      file: observation-compose.yaml
+      service: otel-collector
+
+# Ensure observability network is created
+networks:
+  observability:
+    driver: bridge

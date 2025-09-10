@@ -1,0 +1,58 @@
+target: all
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /data
+
+blocks_storage:
+  filesystem:
+    dir: /data/blocks
+
+ruler_storage:
+  filesystem:
+    dir: /data/ruler
+
+alertmanager_storage:
+  filesystem:
+    dir: /data/alertmanager
+
+compactor:
+  data_dir: /data/compactor
+
+ingester:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+    replication_factor: 1
+
+distributor:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+ruler:
+  rule_path: /data/rules
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+alertmanager:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+query_frontend:
+  address: 127.0.0.1
+
+querier:
+  address: 127.0.0.1

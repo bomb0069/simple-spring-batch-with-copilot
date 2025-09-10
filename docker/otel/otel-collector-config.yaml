@@ -1,0 +1,75 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'batch-app'
+          static_configs:
+            - targets: ['batch-processing-app:8080']
+          metrics_path: '/actuator/prometheus'
+          scrape_interval: 15s
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  resource:
+    attributes:
+      - key: service.name
+        value: batch-processing
+        action: upsert
+      - key: service.version
+        value: "1.0.0"
+        action: upsert
+
+exporters:
+  # Send traces to Tempo
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Send logs to Loki
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+
+  # Send metrics to Prometheus
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: batch
+    const_labels:
+      environment: docker
+
+  # Send metrics to Mimir
+  otlp/mimir:
+    endpoint: mimir:9009
+    tls:
+      insecure: true
+
+  # Debug exporter for troubleshooting
+  debug:
+    verbosity: normal
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp/tempo, debug]
+    
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [resource, batch]
+      exporters: [prometheus, otlp/mimir]
+    
+    logs:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [loki, debug]
+
+  extensions: []
